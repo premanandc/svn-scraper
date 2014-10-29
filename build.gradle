@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:17.0'
+    compile 'org.apache.commons:commons-exec:1.2'
+    testCompile 'junit:junit:4.11'
+    testCompile 'org.assertj:assertj-core:1.7.0'
+}
