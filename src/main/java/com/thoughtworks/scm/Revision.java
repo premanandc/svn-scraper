@@ -1,5 +1,8 @@
 package com.thoughtworks.scm;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -12,13 +15,14 @@ import static java.util.stream.Collectors.partitioningBy;
 
 public class Revision {
 
-    public static final boolean TEST_LINES = true;
-    public static final boolean PROD_LINES = false;
+    public static final boolean TEST_FILES = true;
+    public static final boolean PROD_FILES = false;
     public static final DateTimeFormatter DATE_TIME_FORMAT = ofPattern("yyyy-MM-dd HH:mm:ss Z (eee, dd MMM yyyy)");
     public final Map<Boolean, List<Change>> changes;
     public final String id;
-    private final String author;
-    private final LocalDateTime date;
+    public final String author;
+    public final LocalDateTime date;
+    public static final ObjectMapper MAPPER = new ObjectMapper();
 
     public Revision(String id, String url) {
         this.id = id;
@@ -50,19 +54,33 @@ public class Revision {
         return String.format("On %s author '%s' made committed %s. Changes: %d files, prod lines: %d, test lines: %d", date.format(ISO_LOCAL_DATE_TIME), author, id, changes(), prodLineChanges(), testLineChanges());
     }
 
-    public long testLineChanges() {
-        return testFiles().parallelStream().mapToLong(Change::changes).sum();
+    private List<Change> testFiles() {
+        return changes.get(TEST_FILES);
     }
 
-    private List<Change> testFiles() {
-        return changes.get(TEST_LINES);
+    public long testLineChanges() {
+        return testFiles().parallelStream().mapToLong(Change::lineChanges).sum();
     }
+
 
     public long prodLineChanges() {
-        return prodFiles().parallelStream().mapToLong(Change::changes).sum();
+        return prodFiles().parallelStream().mapToLong(Change::lineChanges).sum();
     }
 
-    private List<Change> prodFiles() {
-        return changes.get(PROD_LINES);
+    public List<Change> prodFiles() {
+        return changes.get(PROD_FILES);
+    }
+
+    public Ratio testToProdLineRatio() {
+        return new Ratio(testLineChanges(), prodLineChanges());
+    }
+
+    public JsonNode toJson() {
+        return MAPPER.createObjectNode()
+                .put("ts", date.getNano())
+                .put("hash", id)
+                .put("testPercentage", testLineChanges() / prodLineChanges())
+                .put("size", prodLineChanges() + testLineChanges())
+                .put("author", author);
     }
 }

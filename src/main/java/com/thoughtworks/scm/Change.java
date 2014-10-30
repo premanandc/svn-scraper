@@ -59,7 +59,12 @@ public class Change {
         return file.endsWith("Tests?\\.\\w+");
     }
 
-    public long changes() {
+    public long lineChanges() {
         return additions + deletions;
+    }
+
+    @Override
+    public String toString() {
+        return file;
     }
 }
