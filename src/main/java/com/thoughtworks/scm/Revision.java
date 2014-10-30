@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.thoughtworks.utils.ProcessRunner.SVN;
+import static java.time.ZoneId.systemDefault;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static java.util.stream.Collectors.partitioningBy;
@@ -77,7 +78,7 @@ public class Revision {
 
     public JsonNode toJson() {
         return MAPPER.createObjectNode()
-                .put("ts", date.getNano())
+                .put("ts", date.atZone(systemDefault()).toEpochSecond())
                 .put("hash", id)
                 .put("testPercentage", testLineChanges() / prodLineChanges())
                 .put("size", prodLineChanges() + testLineChanges())

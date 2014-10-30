@@ -20,11 +20,15 @@ public class Ratio {
         return denominator == ratio.denominator && numerator == ratio.numerator;
     }
 
-
     @Override
     public int hashCode() {
         int result = (int) (numerator ^ (numerator >>> 32));
         result = 31 * result + (int) (denominator ^ (denominator >>> 32));
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return numerator + "/" + denominator;
     }
 }
