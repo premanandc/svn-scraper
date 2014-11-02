@@ -4,9 +4,12 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +20,7 @@ public class ProcessRunner {
 
     public static final ProcessRunner SVN = new ProcessRunner("svn");
     private final String executable;
+    private static final Logger logger = LoggerFactory.getLogger(ProcessRunner.class);
 
     private ProcessRunner(String executable) {
         this.executable = executable;
@@ -26,25 +30,29 @@ public class ProcessRunner {
         return execute(arguments.split("\\s+"));
     }
     public List<String> execute(String... arguments) {
-        final CommandLine commandLine = new CommandLine(executable).addArguments(arguments);
-        final String command = String.join(" ", commandLine.toStrings());
-        System.out.println("Executing: " + command);
-        Executor executor = new DefaultExecutor();
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            executor.setStreamHandler(new PumpStreamHandler(out));
-            try {
-                int result = executor.execute(commandLine);
-                if (result != 0) {
-                    throw new IllegalStateException("Failed to execute command: " + command + "' successfully.");
-                }
-                return asList(out.toString());
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to execute command: '" + command + "'", e);
-            }
+        try (OutputStream out = new ByteArrayOutputStream()) {
+            return asList(out, arguments);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to open stream: '" + command + "'", e);
+            throw new RuntimeException("Failed to open stream", e);
         }
 
+    }
+
+    private List<String> asList(OutputStream out, String[] arguments) {
+        final CommandLine commandLine = new CommandLine(executable).addArguments(arguments);
+        final String command = String.join(" ", commandLine.toStrings());
+        logger.info("Executing " + command);
+        Executor executor = new DefaultExecutor();
+        executor.setStreamHandler(new PumpStreamHandler(out));
+        try {
+            int result = executor.execute(commandLine);
+            if (result != 0) {
+                throw new IllegalStateException("Failed to execute command: " + command + "' successfully.");
+            }
+            return asList(out.toString());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to execute command: '" + command + "'", e);
+        }
     }
 
     private List<String> asList(String output) {

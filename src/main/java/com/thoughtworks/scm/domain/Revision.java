@@ -1,10 +1,10 @@
-package com.thoughtworks.scm;
+package com.thoughtworks.scm.domain;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,12 +25,8 @@ public class Revision {
     public final LocalDateTime date;
     public static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public Revision(String id, String url) {
+    public Revision(String id, String url, String root) {
         this.id = id;
-        String root = SVN.execute("info", url).parallelStream()
-                .filter(l -> l.startsWith("Repository Root"))
-                .findFirst()
-                .map(l -> l.split("\\s")[2].trim()).get();
         final List<String> output = SVN.execute("log", "-v", "-l", "1", "-r", id, "--incremental", url);
 
         String[] revisionLine = output.parallelStream()
@@ -40,10 +36,10 @@ public class Revision {
 
         author = revisionLine[1].trim();
         date = LocalDateTime.parse(revisionLine[2].trim(), DATE_TIME_FORMAT);
-                changes = output.parallelStream()
-                        .filter(l -> l.matches("^\\s+[AMRD]\\s+/.*"))
-                        .map(l -> new Change(id, root, l))
-                        .collect(partitioningBy(Change::isTest));
+        changes = output.parallelStream()
+                .filter(l -> l.matches("^\\s+[AMRD]\\s+/.*"))
+                .map(l -> new Change(id, root, l))
+                .collect(partitioningBy(Change::isTest));
     }
 
     public long changes() {
@@ -76,12 +72,13 @@ public class Revision {
         return new Ratio(testLineChanges(), prodLineChanges());
     }
 
-    public JsonNode toJson() {
-        return MAPPER.createObjectNode()
-                .put("ts", date.atZone(systemDefault()).toEpochSecond())
-                .put("hash", id)
-                .put("testPercentage", testLineChanges() / prodLineChanges())
-                .put("size", prodLineChanges() + testLineChanges())
-                .put("author", author);
+    public Map<String, Object> toStat() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("ts", date.atZone(systemDefault()).toEpochSecond());
+        map.put("hash", id);
+        map.put("testPercentage", testLineChanges() / prodLineChanges());
+        map.put("size", prodLineChanges() + testLineChanges());
+        map.put("author", author);
+        return map;
     }
 }

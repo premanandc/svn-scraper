@@ -1,4 +1,4 @@
-package com.thoughtworks.scm;
+package com.thoughtworks.scm.domain;
 
 import com.thoughtworks.utils.ProcessRunner;
 
