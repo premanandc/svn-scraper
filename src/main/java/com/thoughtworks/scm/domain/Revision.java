@@ -1,7 +1,5 @@
 package com.thoughtworks.scm.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -23,7 +21,6 @@ public class Revision {
     public final String id;
     public final String author;
     public final LocalDateTime date;
-    public static final ObjectMapper MAPPER = new ObjectMapper();
 
     public Revision(String id, String url, String root) {
         this.id = id;
@@ -64,6 +61,10 @@ public class Revision {
         return prodFiles().parallelStream().mapToLong(Change::lineChanges).sum();
     }
 
+    public boolean hasChanges() {
+        return prodLineChanges() + testLineChanges() != 0;
+    }
+
     public List<Change> prodFiles() {
         return changes.get(PROD_FILES);
     }
@@ -73,11 +74,15 @@ public class Revision {
     }
 
     public Map<String, Object> toStat() {
+        final long prodLineChanges = prodLineChanges();
+        final long testLineChanges = testLineChanges();
         Map<String, Object> map = new HashMap<>();
         map.put("ts", date.atZone(systemDefault()).toEpochSecond());
         map.put("hash", id);
-        map.put("testPercentage", testLineChanges() / prodLineChanges());
-        map.put("size", prodLineChanges() + testLineChanges());
+        map.put("testLineChanges", testLineChanges);
+        map.put("prodLineChanges", prodLineChanges);
+//        map.put("testPercentage", testLineChanges / (testLineChanges + prodLineChanges));
+        map.put("size", prodLineChanges + testLineChanges);
         map.put("author", author);
         return map;
     }

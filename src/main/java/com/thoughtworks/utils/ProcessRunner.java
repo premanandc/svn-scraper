@@ -22,7 +22,7 @@ public class ProcessRunner {
     private final String executable;
     private static final Logger logger = LoggerFactory.getLogger(ProcessRunner.class);
 
-    private ProcessRunner(String executable) {
+    public ProcessRunner(String executable) {
         this.executable = executable;
     }
 
@@ -43,12 +43,10 @@ public class ProcessRunner {
         final String command = String.join(" ", commandLine.toStrings());
         logger.info("Executing " + command);
         Executor executor = new DefaultExecutor();
+        executor.setExitValues(null);
         executor.setStreamHandler(new PumpStreamHandler(out));
         try {
-            int result = executor.execute(commandLine);
-            if (result != 0) {
-                throw new IllegalStateException("Failed to execute command: " + command + "' successfully.");
-            }
+            executor.execute(commandLine);
             return asList(out.toString());
         } catch (IOException e) {
             throw new RuntimeException("Failed to execute command: '" + command + "'", e);

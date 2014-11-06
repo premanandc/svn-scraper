@@ -28,6 +28,10 @@ public class RevisionController {
 
     @RequestMapping(method = GET)
     public List<Map<String, Object>> revisions(@RequestParam String url, @RequestParam(defaultValue = "10") int maxRevisions) {
-        return new SvnRepository(svn, url, maxRevisions).revisions.stream().map(Revision::toStat).collect(toList());
+        return new SvnRepository(svn, url, maxRevisions).revisions
+                .stream()
+                .filter(Revision::hasChanges)
+                .map(Revision::toStat)
+                .collect(toList());
     }
 }

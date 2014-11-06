@@ -14,7 +14,6 @@ import static java.util.Collections.emptyList;
 public class Change {
 
     private static final Map<String, Type> ALL_TYPES = new HashMap<>();
-    public static final String SVN_COLOR_CODE = "^\\[\\d+;\\d+m";
     public static final String ADDITION_PATTERN = "^\\+[^+].*";
     public static final String DELETION_PATTERN = "^-[^-].*";
 
@@ -56,7 +55,7 @@ public class Change {
     }
 
     public boolean isTest() {
-        return file.endsWith("Tests?\\.\\w+");
+        return file.matches("^.*Tests?\\.\\w+$");
     }
 
     public long lineChanges() {
