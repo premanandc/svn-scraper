@@ -1,12 +1,13 @@
 package com.thoughtworks.scm.domain;
 
+import com.thoughtworks.utils.ProcessRunner;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.thoughtworks.utils.ProcessRunner.SVN;
 import static java.time.ZoneId.systemDefault;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ofPattern;
@@ -22,9 +23,9 @@ public class Revision {
     public final String author;
     public final LocalDateTime date;
 
-    public Revision(String id, String url, String root) {
+    public Revision(ProcessRunner svn, String id, String url, String root) {
         this.id = id;
-        final List<String> output = SVN.execute("log", "-v", "-l", "1", "-r", id, "--incremental", url);
+        final List<String> output = svn.execute("log", "-v", "-l", "1", "-r", id, "--incremental", url);
 
         String[] revisionLine = output.parallelStream()
                 .filter(l -> l.startsWith(id))
@@ -35,7 +36,7 @@ public class Revision {
         date = LocalDateTime.parse(revisionLine[2].trim(), DATE_TIME_FORMAT);
         changes = output.parallelStream()
                 .filter(l -> l.matches("^\\s+[AMRD]\\s+/.*"))
-                .map(l -> new Change(id, root, l))
+                .map(l -> new Change(svn, id, root, l))
                 .collect(partitioningBy(Change::isTest));
     }
 
@@ -85,7 +86,7 @@ public class Revision {
         map.put("hash", id);
         map.put("testLineChanges", testLineChanges);
         map.put("prodLineChanges", prodLineChanges);
-        map.put("testPercentage", lineChanges() == 0 ? Double.NaN : testLineChanges / lineChanges());
+        map.put("testPercentage", lineChanges() == 0 ? Double.NaN : 1.0 * testLineChanges / lineChanges());
         map.put("size", prodLineChanges + testLineChanges);
         map.put("author", author);
         return map;

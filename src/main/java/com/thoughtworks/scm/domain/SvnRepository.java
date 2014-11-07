@@ -21,7 +21,7 @@ public class SvnRepository {
                 .parallelStream()
                 .filter(l -> l.startsWith("r"))
                 .map(l -> l.split("\\|")[0].trim())
-                .map(r -> new Revision(r, url, root))
+                .map(r -> new Revision(svn, r, url, root))
                 .collect(Collectors.toList());
     }
 }

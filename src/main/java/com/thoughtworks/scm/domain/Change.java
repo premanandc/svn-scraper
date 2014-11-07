@@ -24,7 +24,7 @@ public class Change {
     public static enum Type {
         ADD("A"), MODIFY("M"), DELETE("D") {
             @Override
-            public List<String> changes(String revisionId, String root, String file) {
+            public List<String> changes(ProcessRunner svn, String revisionId, String root, String file) {
                 return emptyList();
             }
         }, MOVE("R");
@@ -33,8 +33,8 @@ public class Change {
             ALL_TYPES.put(code, this);
         }
 
-        public List<String> changes(String revisionId, String root, String file) {
-            return ProcessRunner.SVN.execute("log", String.format("%s%s@%s", root, file, revisionId), "--diff", "-r", revisionId, "--diff-cmd", "diff")
+        public List<String> changes(ProcessRunner svn, String revisionId, String root, String file) {
+            return svn.execute("log", String.format("%s%s@%s", root, file, revisionId), "--diff", "-r", revisionId, "--diff-cmd", "diff")
                     .parallelStream()
                     .map(String::trim)
                     .collect(Collectors.toList());
@@ -45,11 +45,11 @@ public class Change {
         }
     }
 
-    public Change(String id, String root, String changeLine) {
+    public Change(ProcessRunner svn, String id, String root, String changeLine) {
         final String[] parts = changeLine.trim().split("\\s+");
         Type type = Type.parse(parts[0].trim());
         file = join("", copyOfRange(parts, 1, parts.length)).trim();
-        final List<String> changes = type.changes(id, root, file);
+        final List<String> changes = type.changes(svn, id, root, file);
         additions = changes.parallelStream().filter(l -> l.matches(ADDITION_PATTERN)).count();
         deletions = changes.parallelStream().filter(l -> l.matches(DELETION_PATTERN)).count();
     }
