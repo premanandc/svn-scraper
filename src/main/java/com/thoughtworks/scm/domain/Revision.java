@@ -62,7 +62,11 @@ public class Revision {
     }
 
     public boolean hasChanges() {
-        return prodLineChanges() + testLineChanges() != 0;
+        return lineChanges() != 0;
+    }
+
+    private long lineChanges() {
+        return prodLineChanges() + testLineChanges();
     }
 
     public List<Change> prodFiles() {
@@ -81,7 +85,7 @@ public class Revision {
         map.put("hash", id);
         map.put("testLineChanges", testLineChanges);
         map.put("prodLineChanges", prodLineChanges);
-//        map.put("testPercentage", testLineChanges / (testLineChanges + prodLineChanges));
+        map.put("testPercentage", lineChanges() == 0 ? Double.NaN : testLineChanges / lineChanges());
         map.put("size", prodLineChanges + testLineChanges);
         map.put("author", author);
         return map;

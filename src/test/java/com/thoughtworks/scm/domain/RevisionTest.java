@@ -50,7 +50,7 @@ public class RevisionTest {
         assertThat(actual.get("author")).isEqualTo("dandromereschi@gmail.com");
         assertThat(actual.get("testLineChanges")).isEqualTo(0L);
         assertThat(actual.get("prodLineChanges")).isEqualTo(50L);
-//        assertThat(actual.get("testPercentage")).isEqualTo(0L);
+        assertThat(actual.get("testPercentage")).isEqualTo(0.0);
         assertThat(actual.get("hash")).isEqualTo("r547");
         assertThat(actual.get("size")).isEqualTo(50L);
     }
